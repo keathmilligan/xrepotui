@@ -1,0 +1,20 @@
+# Maintainer: ${MAINTAINER_NAME} <${MAINTAINER_EMAIL}>
+pkgname=xrepotui-bin
+pkgver=${VERSION}
+pkgrel=1
+pkgdesc='A terminal UI dashboard for monitoring and managing multiple GitHub repositories'
+arch=('x86_64' 'aarch64')
+url='https://github.com/keathmilligan/xrepotui'
+license=('MIT')
+provides=('xrepotui')
+conflicts=('xrepotui')
+
+source_x86_64=("https://github.com/keathmilligan/xrepotui/releases/download/v${pkgver}/xrepotui-${pkgver}-x86_64-unknown-linux-gnu.tar.gz")
+source_aarch64=("https://github.com/keathmilligan/xrepotui/releases/download/v${pkgver}/xrepotui-${pkgver}-aarch64-unknown-linux-gnu.tar.gz")
+
+sha256sums_x86_64=('SKIP')
+sha256sums_aarch64=('SKIP')
+
+package() {
+  install -Dm755 "xrepotui" "${pkgdir}/usr/bin/xrepotui"
+}

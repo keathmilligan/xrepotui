@@ -1,0 +1,88 @@
+<?xml version='1.0' encoding='windows-1252'?>
+<!--
+  WiX3 installer source for xrepotui.
+  Requires: cargo-wix, WiX Toolset v3
+-->
+<Wix xmlns='http://schemas.microsoft.com/wix/2006/wi'>
+  <Product
+    Id='*'
+    Name='xrepotui'
+    UpgradeCode='C4E3B2A1-8D9F-4A0C-B3E6-7F4D9C2A5B8E'
+    Manufacturer='Keath Milligan'
+    Language='1033'
+    Codepage='1252'
+    Version='$(var.Version)'>
+
+    <Package Id='*'
+      Keywords='Installer'
+      Description='A terminal UI dashboard for monitoring and managing multiple GitHub repositories'
+      Manufacturer='Keath Milligan'
+      InstallerVersion='450'
+      Languages='1033'
+      Compressed='yes'
+      SummaryCodepage='1252'/>
+
+    <MajorUpgrade
+      Schedule='afterInstallInitialize'
+      DowngradeErrorMessage='A newer version of [ProductName] is already installed. Setup will now exit.'/>
+
+    <Media Id='1' Cabinet='media1.cab' EmbedCab='yes' DiskPrompt='CD-ROM #1'/>
+    <Property Id='DiskPrompt' Value='xrepotui Installation'/>
+
+    <Directory Id='TARGETDIR' Name='SourceDir'>
+      <Directory Id='ProgramFiles64Folder'>
+        <Directory Id='APPLICATIONROOTDIRECTORY' Name='xrepotui'/>
+      </Directory>
+    </Directory>
+
+    <DirectoryRef Id='APPLICATIONROOTDIRECTORY'>
+      <Component Id='binary0' Guid='D2C3B4A5-F6E7-8901-BCDE-F01234567891'>
+        <File
+          Id='exe0'
+          Name='xrepotui.exe'
+          DiskId='1'
+          Source='$(var.CargoTargetBinDir)\xrepotui.exe'
+          KeyPath='yes'/>
+      </Component>
+
+      <Component Id='PathComponent' Guid='E0F9D8C7-A6B5-4321-0FED-CB9876543211'>
+        <Environment
+          Id='PATH'
+          Name='PATH'
+          Value='[APPLICATIONROOTDIRECTORY]'
+          Permanent='no'
+          Part='last'
+          Action='set'
+          System='yes'/>
+        <RegistryValue
+          Root='HKCU'
+          Key='Software\xrepotui'
+          Name='installed'
+          Type='integer'
+          Value='1'
+          KeyPath='yes'/>
+      </Component>
+    </DirectoryRef>
+
+    <Feature
+      Id='MainProgram'
+      Title='xrepotui'
+      Description='Installs xrepotui CLI.'
+      Display='expand'
+      Level='1'
+      ConfigurableDirectory='APPLICATIONROOTDIRECTORY'>
+      <ComponentRef Id='binary0'/>
+      <ComponentRef Id='PathComponent'/>
+    </Feature>
+
+    <UIRef Id='WixUI_FeatureTree'/>
+    <UIRef Id='WixUI_ErrorProgressText'/>
+    <WixVariable Id='WixUILicenseRtf' Value='dist\wix\License.rtf'/>
+
+    <Property Id='ARPHELPLINK' Value='https://github.com/keathmilligan/xrepotui'/>
+    <Property Id='ARPURLINFOABOUT' Value='https://github.com/keathmilligan/xrepotui'/>
+    <Property Id='ARPURLUPDATEINFO' Value='https://github.com/keathmilligan/xrepotui/releases'/>
+    <Property Id='ARPNOREPAIR' Value='1' Secure='yes'/>
+
+  </Product>
+</Wix>

@@ -1,0 +1,11 @@
+name: "xrepotui"
+arch: "{{ARCH}}"
+platform: "linux"
+version: "{{VERSION}}"
+maintainer: "${MAINTAINER}"
+description: "A terminal UI dashboard for monitoring and managing multiple GitHub repositories"
+homepage: "https://github.com/keathmilligan/xrepotui"
+license: "MIT"
+contents:
+  - src: ./packaging/xrepotui
+    dst: /usr/bin/xrepotui

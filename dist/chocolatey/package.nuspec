@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<package xmlns="http://schemas.microsoft.com/packaging/2015/06/nuspec.xsd">
+  <metadata>
+    <id>xrepotui</id>
+    <version>0.1.0</version>
+    <title>xrepotui</title>
+    <authors>Keath Milligan</authors>
+    <projectUrl>https://github.com/keathmilligan/xrepotui</projectUrl>
+    <licenseUrl>https://github.com/keathmilligan/xrepotui/blob/master/LICENSE</licenseUrl>
+    <requireLicenseAcceptance>false</requireLicenseAcceptance>
+    <description>A terminal UI dashboard for monitoring and managing multiple GitHub repositories at a glance.</description>
+    <tags>cli tui github git dashboard development-tools</tags>
+    <packageSourceUrl>https://github.com/keathmilligan/xrepotui</packageSourceUrl>
+  </metadata>
+  <files>
+    <file src="tools\**" target="tools" />
+  </files>
+</package>

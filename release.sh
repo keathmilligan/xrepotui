@@ -229,7 +229,7 @@ else
     # ---------------------------------------------------------------------------
 
     echo "Committing version bump..."
-    git add Cargo.toml
+    git add Cargo.toml Cargo.lock
     git commit -m "chore: bump version to ${NEW_VERSION}"
 
     echo "Pushing commits to origin/master..."

@@ -4,17 +4,17 @@
 use std::collections::HashMap;
 use std::time::{Duration, Instant};
 
-use ratatui::Terminal;
-use ratatui::backend::CrosstermBackend;
-use tokio::sync::mpsc;
-use tokio::time::interval;
 use crossterm::event::{Event, EventStream, KeyCode, KeyModifiers};
 use futures::StreamExt;
+use ratatui::backend::CrosstermBackend;
+use ratatui::Terminal;
+use tokio::sync::mpsc;
+use tokio::time::interval;
 
 use crate::config::Config;
 use crate::github::models::*;
 use crate::github::GitHubClient;
-use crate::navigation::{ViewStack, View, PrViewState, LogViewerState};
+use crate::navigation::{LogViewerState, PrViewState, View, ViewStack};
 
 // ── Per-repo data ─────────────────────────────────────────────────────────────
 
@@ -51,7 +51,11 @@ pub enum AppEvent {
     /// Periodic tick for time-based UI updates (elapsed counters, etc.).
     Tick,
     /// Job log fetched.
-    LogFetched { job_id: u64, content: String, is_complete: bool },
+    LogFetched {
+        job_id: u64,
+        content: String,
+        is_complete: bool,
+    },
     /// Fetching log for a job started (for loading indicator).
     LogLoading { job_id: u64 },
 }
@@ -90,8 +94,20 @@ impl AppState {
         let mut repo_data = HashMap::new();
         let mut fetch_state = HashMap::new();
         for r in repos {
-            repo_data.insert(r.clone(), RepoData { key: r.clone(), ..Default::default() });
-            fetch_state.insert(r.clone(), RepoFetchState { loading: true, ..Default::default() });
+            repo_data.insert(
+                r.clone(),
+                RepoData {
+                    key: r.clone(),
+                    ..Default::default()
+                },
+            );
+            fetch_state.insert(
+                r.clone(),
+                RepoFetchState {
+                    loading: true,
+                    ..Default::default()
+                },
+            );
         }
         Self {
             views: ViewStack::new(),
@@ -148,7 +164,11 @@ impl AppState {
                 }
             }
 
-            AppEvent::LogFetched { job_id, content, is_complete } => {
+            AppEvent::LogFetched {
+                job_id,
+                content,
+                is_complete,
+            } => {
                 self.log_loading = false;
                 self.log_job_complete = is_complete;
 
@@ -168,7 +188,10 @@ impl AppState {
                 if let View::LogViewer(ref mut s) = *self.views.current_mut() {
                     s.total_lines = total;
                     s.step_starts = parse_step_boundaries(
-                        self.log_content.get(&job_id).map(|v| v.as_slice()).unwrap_or(&[])
+                        self.log_content
+                            .get(&job_id)
+                            .map(|v| v.as_slice())
+                            .unwrap_or(&[]),
                     );
                     if was_at_bottom {
                         s.scroll = total.saturating_sub(1);
@@ -213,7 +236,13 @@ impl AppState {
                 let is_root = self.views.is_root();
                 match self.views.current_mut() {
                     View::Dashboard(ref mut state) => {
-                        handle_dashboard_key(state, key, is_root, &mut self.running, &mut self.pending_quit);
+                        handle_dashboard_key(
+                            state,
+                            key,
+                            is_root,
+                            &mut self.running,
+                            &mut self.pending_quit,
+                        );
                     }
                     View::Repo(_) => {
                         if matches!(key.code, KeyCode::Char('q') | KeyCode::Esc) {
@@ -262,8 +291,8 @@ impl AppState {
 
 // ── Key handlers for individual views ────────────────────────────────────────
 
-use crossterm::event::KeyEvent;
 use crate::navigation::DashboardState;
+use crossterm::event::KeyEvent;
 
 fn handle_dashboard_key(
     state: &mut DashboardState,
@@ -278,8 +307,12 @@ fn handle_dashboard_key(
                 state.filter.active = false;
                 state.filter.text.clear();
             }
-            KeyCode::Backspace => { state.filter.text.pop(); }
-            KeyCode::Char(c) => { state.filter.text.push(c); }
+            KeyCode::Backspace => {
+                state.filter.text.pop();
+            }
+            KeyCode::Char(c) => {
+                state.filter.text.push(c);
+            }
             _ => {}
         }
         return;
@@ -308,9 +341,15 @@ fn handle_dashboard_key(
 
 fn handle_pr_key(state: &mut PrViewState, key: KeyEvent) {
     match key.code {
-        KeyCode::Char('j') | KeyCode::Down => { state.body_scroll += 1; }
-        KeyCode::Char('k') | KeyCode::Up => { state.body_scroll = state.body_scroll.saturating_sub(1); }
-        KeyCode::Tab => { state.focused_panel = (state.focused_panel + 1) % 3; }
+        KeyCode::Char('j') | KeyCode::Down => {
+            state.body_scroll += 1;
+        }
+        KeyCode::Char('k') | KeyCode::Up => {
+            state.body_scroll = state.body_scroll.saturating_sub(1);
+        }
+        KeyCode::Tab => {
+            state.focused_panel = (state.focused_panel + 1) % 3;
+        }
         _ => {}
     }
 }
@@ -331,26 +370,34 @@ fn handle_log_viewer_key(state: &mut LogViewerState, key: KeyEvent) {
         }
         KeyCode::Char(']') | KeyCode::Char('n') => {
             // Jump to next step.
-            let next = state.step_starts.iter()
+            let next = state
+                .step_starts
+                .iter()
                 .find(|&&s| s > state.scroll)
                 .copied();
             if let Some(s) = next {
                 state.scroll = s;
                 // Update current step index.
-                state.current_step = state.step_starts.iter()
+                state.current_step = state
+                    .step_starts
+                    .iter()
                     .position(|&x| x == s)
                     .unwrap_or(state.current_step);
             }
         }
         KeyCode::Char('[') | KeyCode::Char('p') => {
             // Jump to previous step.
-            let prev = state.step_starts.iter()
+            let prev = state
+                .step_starts
+                .iter()
                 .rev()
                 .find(|&&s| s < state.scroll)
                 .copied();
             if let Some(s) = prev {
                 state.scroll = s;
-                state.current_step = state.step_starts.iter()
+                state.current_step = state
+                    .step_starts
+                    .iter()
                     .position(|&x| x == s)
                     .unwrap_or(state.current_step);
             }
@@ -364,7 +411,9 @@ fn handle_log_viewer_key(state: &mut LogViewerState, key: KeyEvent) {
 /// Parse step boundary line indices from GitHub Actions log lines.
 /// GitHub uses `##[group]` prefixes or timestamp + step markers.
 pub fn parse_step_boundaries(lines: &[String]) -> Vec<usize> {
-    lines.iter().enumerate()
+    lines
+        .iter()
+        .enumerate()
         .filter_map(|(i, line)| {
             if line.contains("##[group]") || line.contains("##[endgroup]") {
                 None // only group starts count
@@ -385,7 +434,9 @@ pub fn parse_step_boundaries(lines: &[String]) -> Vec<usize> {
 
 /// Parse step boundaries more carefully — match lines containing `##[group]`.
 pub fn parse_step_boundaries_v2(lines: &[String]) -> Vec<usize> {
-    lines.iter().enumerate()
+    lines
+        .iter()
+        .enumerate()
         .filter_map(|(i, line)| {
             if line.contains("##[group]") {
                 Some(i)
@@ -411,7 +462,9 @@ pub async fn run(
     // Spawn poll tasks for each repo.
     for repo_key in &config.repos {
         let parts: Vec<&str> = repo_key.splitn(2, '/').collect();
-        if parts.len() != 2 { continue; }
+        if parts.len() != 2 {
+            continue;
+        }
         let owner = parts[0].to_string();
         let repo = parts[1].to_string();
         let tx = tx.clone();
@@ -444,7 +497,8 @@ pub async fn run(
                 let workflow_runs = c.fetch_workflow_runs(&owner, &repo, 10).await;
 
                 let commits = if let Ok(ref s) = summary {
-                    c.fetch_recent_commits(&owner, &repo, &s.default_branch, 10).await
+                    c.fetch_recent_commits(&owner, &repo, &s.default_branch, 10)
+                        .await
                         .unwrap_or_default()
                 } else {
                     vec![]
@@ -462,7 +516,10 @@ pub async fn run(
                         let _ = tx.send(AppEvent::DataFetched(Box::new(data)));
                     }
                     Err(e) => {
-                        let _ = tx.send(AppEvent::FetchError { repo: key, message: e.to_string() });
+                        let _ = tx.send(AppEvent::FetchError {
+                            repo: key,
+                            message: e.to_string(),
+                        });
                     }
                 }
             }
@@ -475,7 +532,9 @@ pub async fn run(
         let mut ticker = interval(Duration::from_secs(1));
         loop {
             ticker.tick().await;
-            if tick_tx.send(AppEvent::Tick).is_err() { break; }
+            if tick_tx.send(AppEvent::Tick).is_err() {
+                break;
+            }
         }
     });
 
@@ -484,7 +543,9 @@ pub async fn run(
     tokio::spawn(async move {
         let mut reader = EventStream::new();
         while let Some(Ok(event)) = reader.next().await {
-            if term_tx.send(AppEvent::TerminalEvent(event)).is_err() { break; }
+            if term_tx.send(AppEvent::TerminalEvent(event)).is_err() {
+                break;
+            }
         }
     });
 

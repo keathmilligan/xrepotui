@@ -11,10 +11,10 @@ use std::panic;
 
 use crossterm::execute;
 use crossterm::terminal::{
-    EnterAlternateScreen, LeaveAlternateScreen, disable_raw_mode, enable_raw_mode,
+    disable_raw_mode, enable_raw_mode, EnterAlternateScreen, LeaveAlternateScreen,
 };
-use ratatui::Terminal;
 use ratatui::backend::CrosstermBackend;
+use ratatui::Terminal;
 
 /// Restore the terminal to a usable state. Called on both clean exit and panic.
 fn restore_terminal() {
@@ -33,14 +33,12 @@ async fn main() -> anyhow::Result<()> {
     }));
 
     // Load configuration — exit with a clear error if invalid.
-    let config = config::load().map_err(|e| {
-        anyhow::anyhow!("Failed to load configuration: {}", e)
-    })?;
+    let config =
+        config::load().map_err(|e| anyhow::anyhow!("Failed to load configuration: {}", e))?;
 
     // Resolve GitHub token.
-    let token = config::resolve_token(&config).map_err(|e| {
-        anyhow::anyhow!("Failed to resolve GitHub token: {}", e)
-    })?;
+    let token = config::resolve_token(&config)
+        .map_err(|e| anyhow::anyhow!("Failed to resolve GitHub token: {}", e))?;
 
     // Set up terminal.
     enable_raw_mode()?;
